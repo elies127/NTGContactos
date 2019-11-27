@@ -23,6 +23,8 @@ public class Contacto {
     public String getNombre() {
         return nombre;
     }
+
+
     public static void addContacto(final Context context, Contacto contacto) {
         String displayName = contacto.getNombre();
         String mobileNumber = contacto.getNumero();
