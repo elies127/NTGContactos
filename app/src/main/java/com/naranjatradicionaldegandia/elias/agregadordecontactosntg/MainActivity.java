@@ -133,25 +133,17 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
-     /*   final LectorMail lector = new LectorMail(context);
-        Handler h2 = new Handler();
 
-            TextView contenido = findViewById(R.id.mensaje_correo);
-            Correo c = null;
-            try {
 
-                ServicioAgregador.correoNuevo = lector.get().getContenido();
-                c = lector.get();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            contenido.setText(c.getContenido());
 
-*/
+
+
+
+
+
+
+
     }
-
 
 
 

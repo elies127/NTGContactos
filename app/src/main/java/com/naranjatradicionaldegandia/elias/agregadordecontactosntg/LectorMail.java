@@ -106,10 +106,10 @@ public class LectorMail extends AsyncTask<Void, Void, String> {
 
 
 
-            System.out.println("FECHA DE ENVIO:" + msg.getSentDate());
-            System.out.println("ASUNTO:" + msg.getSubject());
+           // System.out.println("FECHA DE ENVIO:" + msg.getSentDate());
+         //   System.out.println("ASUNTO:" + msg.getSubject());
 
-            System.out.println("CONTENT CON mime:" + getTextFromMessage(msg));
+          //  System.out.println("CONTENT CON mime:" + getTextFromMessage(msg));
 
 
            c = new Correo(msg.getSubject(), getTextFromMessage(msg), msg.getSentDate().toString(), msg.getFrom().toString());
@@ -124,7 +124,7 @@ public class LectorMail extends AsyncTask<Void, Void, String> {
     protected void onPostExecute(String c) {
         super.onPostExecute(c);
 
-        delegate.processFinish(c);
+
     }
 
 

@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SyncStatusObserver;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -22,9 +23,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
 import com.google.gson.Gson;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.concurrent.ExecutionException;
 
@@ -93,7 +91,7 @@ class Pedido{
 
 
 
-public class ServicioAgregador extends Service implements AsyncResponse{
+public class ServicioAgregador extends Service{
     NotificationManager notificationManager;
 
     static final String CANAL_ID = "contactos";
@@ -103,14 +101,22 @@ public class ServicioAgregador extends Service implements AsyncResponse{
     public static Runnable runnable = null;
     public Contacto contacto;
     public static Boolean estaEncendido = false;
-    public static String correoNuevo;
-
+    public static AsyncTask<Void, Void, String> correoNuevo;
+    public int nPedidosNuevosClientes = 0;
+    public int nPedidos = 0;
+    public String id_UltimoPedido;
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
 
+    private void actualizarCorreo() throws ExecutionException, InterruptedException {
+             correoNuevo = new LectorMail(context).execute();
+
+
+
+    }
     @Override
 
     public void onCreate() {
@@ -130,11 +136,12 @@ public class ServicioAgregador extends Service implements AsyncResponse{
             notificationChannel.enableVibration(true);
             notificationManager.createNotificationChannel(notificationChannel);
         }
-        NotificationCompat.Builder notificacion =
+        final NotificationCompat.Builder notificacion =
                 new NotificationCompat.Builder(ServicioAgregador.this, CANAL_ID)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentTitle("NTG Contactos")
-                        .setContentText("Estoy pendiente de los pedidos y clientes nuevos.");
+                        .setContentText("Nuevos clientes: " + nPedidosNuevosClientes + " - Pedidos totales: " + nPedidos);
+
 
         startForeground(NOTIFICACION_ID, notificacion.build());
 
@@ -143,10 +150,96 @@ public class ServicioAgregador extends Service implements AsyncResponse{
         notificacion.setContentIntent(intencionPendiente);
 
         Log.d("SERVICIO AGREGADOR: ", "INTENTANDO OBTENER NUEVO CORREO...");
-
+        try {
+            actualizarCorreo();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         //--
+        handler = new Handler();
+        Log.d("SERVICIO AGREGADOR: ", "---------- COMIENZA EL BUCLE --------");
+        runnable = new Runnable() {
+            public void run() {
+                if (estaEncendido == false) {
+                    stopSelf();
+                }
+                try {
+                    actualizarCorreo();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Log.d("SERVICIO AGREGADOR: ", "---------- COMIENZA EL BUCLE --------");
+                // Toast.makeText(context, "El servicio sigue ejecutandose", Toast.LENGTH_LONG).show(); PARA TESTEAR SI EL SERVICIO SE HA BLOQUEADO
+                /*String jsonString = "{\n" +
+                        "  \"nombre\": \"nombre cliente\",\n" +
+                        "  \"numero\": \"5555\",\n" +
+                        "  \"id_pedido\": \"6456\",\n" +
+                        "  \"esNuevoCliente\": \"si\",\n" +
+                        "  \"urlPedido\": \"https://www.naranjatradicionaldegandia.com/user/27379/orders/143157\",\n" +
+                        "  \"email\": \"emaildelcliente@mail.com\"\n" +
+                        "}";*/
+                String jsonString = null;
+                try {
+                    jsonString = correoNuevo.get();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 
+                if (jsonString.contains("\"id_pedido\":")) {
+                    Gson gson = new Gson();
+                    Pedido datos = gson.fromJson(jsonString, Pedido.class);
+
+                    //  System.out.println("/////////////" + datos.toString());
+                    contacto = new Contacto(datos.getNombre(), datos.getNumero(), datos.getEmail()); //Manualmente. Sustituir por los datos del mail.
+                    //--- COMPROBADOR DE SI ES NUEVO CLIENTE O NO.
+
+                    if (!(datos.getId_pedido().equals(id_UltimoPedido))) { //Si es un pedido nuevo/un correo nuevo (Para no comprobar todo el rato si es un nuevo pedido)
+
+                        id_UltimoPedido = datos.getId_pedido();
+                        if (ActivityCompat.checkSelfPermission(context,
+                                WRITE_CONTACTS)
+                                == PackageManager.PERMISSION_GRANTED) {
+
+                            Log.d("CONTACTOS", "GET NOMBRE POR NUMERO" + contacto.getNombrePorNumero(contacto.getNumero(), context));
+                            Log.d("CONTACTOS: ", "Hay permisos para añadir contacto. Comparando si ya existe... : " + contacto.toString());
+                            if (contacto.getNombrePorNumero(contacto.getNumero(), context) == "") {
+                                Log.d("CONTACTOS: ", "¡¡NUEVO CONTACTO DETECTADO!! Agregando a...: " + contacto.toString());
+
+
+                                addContacto(context, contacto);
+                                nPedidosNuevosClientes++;
+                                notificacion.setContentText("Nuevos clientes: " + nPedidosNuevosClientes + " - Pedidos totales: " + nPedidos);
+                                startForeground(NOTIFICACION_ID, notificacion.build());
+                            } else {
+                                Log.d("CONTACTOS: ", "Se ha inentado añadir un contacto que ya existe: " + contacto.toString());
+
+                            }
+
+
+                        } else {
+
+                            // Then do something meaningful...
+                            Log.d("CONTACTOS: ", "No hay permisos para añadir o ver contactos. Solicitando... : " + contacto.toString());
+
+                        }
+                    } else {
+                        Log.d("CONTACTOS", "No se ha detectado un pedido nuevo");
+                    }
+
+
+                }
+                handler.postDelayed(runnable, 250);
+            }
+        };
+
+        handler.postDelayed(runnable, 500);
     }
 
 
@@ -165,57 +258,5 @@ public class ServicioAgregador extends Service implements AsyncResponse{
         Toast.makeText(this, "Servicio iniciado por el usuario.", Toast.LENGTH_LONG).show();
     }
 
-    @Override
-    public void processFinish(final String output) {
-        handler = new Handler();
-        Log.d("SERVICIO AGREGADOR: ", "---------- COMIENZA EL BUCLE --------");
-        runnable = new Runnable() {
-            public void run() {
-                if (estaEncendido == false) {
-                    stopSelf();
-                }
-                Log.d("SERVICIO AGREGADOR: ", "---------- COMIENZA EL BUCLE --------");
-                Toast.makeText(context, "El servicio sigue ejecutandose", Toast.LENGTH_LONG).show();
-                /*String jsonString = "{\n" +
-                        "  \"nombre\": \"nombre cliente\",\n" +
-                        "  \"numero\": \"5555\",\n" +
-                        "  \"id_pedido\": \"6456\",\n" +
-                        "  \"esNuevoCliente\": \"si\",\n" +
-                        "  \"urlPedido\": \"https://www.naranjatradicionaldegandia.com/user/27379/orders/143157\",\n" +
-                        "  \"email\": \"emaildelcliente@mail.com\"\n" +
-                        "}";*/
-                String jsonString = output;
 
-                System.out.println("///////////// Desde ServicioAgregador: " + jsonString);
-                Gson gson = new Gson();
-                Pedido datos = gson.fromJson(jsonString, Pedido.class);
-
-                //  System.out.println("/////////////" + datos.toString());
-                contacto = new Contacto(datos.getNombre(), datos.getNumero(), datos.getEmail()); //Manualmente. Sustituir por los datos del mail.
-
-                if (ActivityCompat.checkSelfPermission(context,
-                        WRITE_CONTACTS)
-                        == PackageManager.PERMISSION_GRANTED) {
-
-
-                    Log.d("CONTACTOS: ", "Hay permisos para añadir contacto. Comparando si ya existe... : " + contacto.toString());
-                    if (contacto.getNombrePorNumero(contacto.getNumero(), context) == null) {
-                        addContacto(context, contacto);
-                    } else {
-                        Log.d("CONTACTOS: ", "Se ha inentado añadir un contacto que ya existe: " + contacto.toString());
-                    }
-
-
-                } else {
-
-                    // Then do something meaningful...
-                    Log.d("CONTACTOS: ", "No hay permisos para añadir o ver contactos. Solicitando... : " + contacto.toString());
-
-                }
-                handler.postDelayed(runnable, 6000);
-            }
-        };
-
-        handler.postDelayed(runnable, 8000);
-    }
 }
