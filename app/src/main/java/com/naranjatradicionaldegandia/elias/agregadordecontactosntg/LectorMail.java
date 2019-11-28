@@ -26,7 +26,6 @@ import javax.mail.internet.MimeMultipart;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 public class LectorMail extends AsyncTask<Void, Void, String> {
-    public AsyncResponse delegate = null;
     private Context context;
     private String mensaje;
     private Correo c;
@@ -106,8 +105,8 @@ public class LectorMail extends AsyncTask<Void, Void, String> {
 
 
 
-           // System.out.println("FECHA DE ENVIO:" + msg.getSentDate());
-         //   System.out.println("ASUNTO:" + msg.getSubject());
+           System.out.println("FECHA DE ENVIO:" + msg.getSentDate());
+          System.out.println("ASUNTO:" + msg.getSubject());
 
           //  System.out.println("CONTENT CON mime:" + getTextFromMessage(msg));
 

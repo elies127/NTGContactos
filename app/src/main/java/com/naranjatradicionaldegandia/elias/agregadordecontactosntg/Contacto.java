@@ -11,15 +11,25 @@ import java.util.ArrayList;
 
 public class Contacto {
 
-    private String nombre, numero, correo, grupo;
-
-    public Contacto(String nombre, String numero, String correo, String grupo) {
+    private String nombre, numero, correo, direccion;
+    private int id, npedidos;
+    private String grupo = "Naranja Tradicional";
+    public Contacto(String nombre, String numero, String correo) {
         this.nombre = nombre;
         this.numero = numero;
         this.correo = correo;
-        this.grupo = grupo;
-    }
 
+    }
+    //constructor usado en BD
+    public Contacto(int id, String nombre, String direccion, String numero, String correo, int npedidos) {
+        this.nombre = nombre;
+        this.numero = numero;
+        this.correo = correo;
+        this.npedidos = npedidos;
+        this.direccion = direccion;
+
+        this.id = id;
+    }
     public String getNombre() {
         return nombre;
     }
@@ -194,9 +204,28 @@ public class Contacto {
         this.grupo = grupo;
     }
 
-    public Contacto (String nombre, String numero, String correo){
-        this.nombre = nombre;
-        this.numero = numero;
-        this.correo = correo;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getDireccion() {
+        return direccion;
+    }
+
+    public void setDireccion(String direccion) {
+        this.direccion = direccion;
+    }
+
+    public int getNpedidos() {
+        return npedidos;
+    }
+
+    public void setNpedidos(int npedidos) {
+        this.npedidos = npedidos;
     }
 }

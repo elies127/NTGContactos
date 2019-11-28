@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private AppBarConfiguration mAppBarConfiguration;
     public String correoNuevo;
     private Contacto contacto;
+
     final private int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 124;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
