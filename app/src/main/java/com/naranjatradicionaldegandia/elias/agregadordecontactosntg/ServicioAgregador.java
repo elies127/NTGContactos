@@ -1,5 +1,7 @@
 package com.naranjatradicionaldegandia.elias.agregadordecontactosntg;
 
+import android.app.AlarmManager;
+import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -34,6 +36,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static android.Manifest.permission.WRITE_CONTACTS;
+import static android.content.Context.NOTIFICATION_SERVICE;
 import static com.naranjatradicionaldegandia.elias.agregadordecontactosntg.Contacto.addContacto;
 
 class Pedido{
@@ -98,7 +101,7 @@ class Pedido{
 
 
 
-public class ServicioAgregador extends Service{
+public class ServicioAgregador extends IntentService {
     NotificationManager notificationManager;
 
     static final String CANAL_ID = "contactos";
@@ -115,10 +118,19 @@ public class ServicioAgregador extends Service{
     public int nPedidos = 0;
     public String id_UltimoPedido;
     private Intent intent;
+    NotificationCompat.Builder notificacion;
+
+
+    public ServicioAgregador() {
+        super("ServicioAgregador");
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
+
+
 
 
     private void actualizarCorreo() throws ExecutionException, InterruptedException {
@@ -128,10 +140,8 @@ public class ServicioAgregador extends Service{
 
 
     }
-    @Override
 
-    public void onCreate() {
-        Toast.makeText(this, "Servicio creado", Toast.LENGTH_LONG).show();
+    public void startForeGround(){
         Log.d("SERVICIO AGREGADOR: ", "---------- INICIALIZANDO SERVICIO --------");
         //-- notis
         intent = new Intent(context, MainActivity.class);
@@ -161,26 +171,28 @@ public class ServicioAgregador extends Service{
                 this, 0, new Intent(this, MainActivity.class), 0);
         notificacion.setContentIntent(intencionPendiente);
 
-        Log.d("SERVICIO AGREGADOR: ", "INTENTANDO OBTENER NUEVO CORREO...");
-        try {
-            actualizarCorreo();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+
+    }
+
+@RequiresApi(api = Build.VERSION_CODES.O)
+@Override
+    public void onHandleIntent(@Nullable Intent intent){
+
+        if(estaEncendido == false){
+            stopSelf();
         }
+
         bdAgenda = new BDAgenda(context);
         //--
         handler = new Handler();
         Log.d("SERVICIO AGREGADOR: ", "---------- COMIENZA EL BUCLE --------");
-        runnable = new Runnable() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            public void run() {
-                if (estaEncendido == false) {
-                    stopSelf();
-                }
-                try {
+
+
+
+
+                try {Log.d("SERVICIO AGREGADOR: ", "INTENTANDO OBTENER NUEVO CORREO...");
                     actualizarCorreo();
+                        Log.d("SERVICIO AGREGADOR: ", "CORREO OBTENIDO");
                 } catch (ExecutionException e) {
                     e.printStackTrace();
                 } catch (InterruptedException e) {
@@ -198,7 +210,7 @@ public class ServicioAgregador extends Service{
                         "}";*/
                 String jsonString = null;
                 try {
-
+                    actualizarCorreo();
                     jsonString = correoNuevo.get();
                 } catch (ExecutionException e) {
                     e.printStackTrace();
@@ -230,7 +242,7 @@ public class ServicioAgregador extends Service{
 
 
 
-               show_Notification("test", "test", NOTIFICACION_NUEVOCLIENTE_ID);
+
 
 
                 if (finalString.contains("\"id_pedido\":")) {
@@ -281,14 +293,30 @@ public class ServicioAgregador extends Service{
                     }
 
 
+                } else if(finalString.equals("ERROR DE CONEXION")){
+                    show_Notification("Error de conexión", "Ha habido un error al intentar conectar con el correo", 3);
                 }
                 handler.postDelayed(runnable, 250);
-            }
-        };
+
+        ;
 
         handler.postDelayed(runnable, 500);
-    }
 
+
+    }
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        if(estaEncendido){
+            AlarmManager alarm = (AlarmManager)getSystemService(ALARM_SERVICE);
+            alarm.set(
+                    alarm.RTC_WAKEUP,
+                    System.currentTimeMillis() + (10),
+                    PendingIntent.getService(this, 0, new Intent(this, context.getClass()), 0)
+            );
+        }
+
+    }
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void show_Notification(String titulo, String desc, int id){
         AudioAttributes attributes = new AudioAttributes.Builder()
@@ -311,26 +339,14 @@ public class ServicioAgregador extends Service{
         NotificationChannel notificationChannel=new NotificationChannel(CHANNEL_ID,"name",NotificationManager.IMPORTANCE_LOW);
         notificationChannel.setSound(sound, attributes);
         notificationChannel.enableVibration(true);
-        NotificationManager notificationManager=(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager=(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.createNotificationChannel(notificationChannel);
         notificationManager.notify(id,notification);
 
 
     }
 
-    @Override
-    public void onDestroy() {
-        /* IF YOU WANT THIS SERVICE KILLED WITH THE APP THEN UNCOMMENT THE FOLLOWING LINE */
-        handler.removeCallbacks(runnable);
-        estaEncendido = false;
-        Log.d("SERVICIO AGREGADOR: ", "---------- SERVICIO FINALIZADO --------");
-        Toast.makeText(this, "Servicio detenido", Toast.LENGTH_LONG).show();
-    }
 
-    @Override
-    public void onStart(Intent intent, int startid) {
-        Toast.makeText(this, "Servicio iniciado por el usuario.", Toast.LENGTH_LONG).show();
-    }
 
 
 }

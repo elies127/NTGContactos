@@ -101,7 +101,7 @@ public class LectorMail extends AsyncTask<Void, Void, String> {
                     messageContent = content.toString();
                 }
             }
-            System.out.println(" Message: " + messageContent);
+           // System.out.println(" Message: " + messageContent);
 
 
 
@@ -117,8 +117,9 @@ public class LectorMail extends AsyncTask<Void, Void, String> {
 
         } catch (Exception mex) {
             mex.printStackTrace();
+            return "ERROR DE CONEXION";
         }
-        return null;
+
     }
     protected void onPostExecute(String c) {
         super.onPostExecute(c);

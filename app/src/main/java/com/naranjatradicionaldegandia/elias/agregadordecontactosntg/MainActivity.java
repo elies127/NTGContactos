@@ -4,6 +4,8 @@ import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentUris;
@@ -113,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
                             stopService(new Intent(context, ServicioAgregador.class));
                         } else {
                             ServicioAgregador.estaEncendido = true;
+
                             startService(new Intent(context, ServicioAgregador.class));
                         }
 
