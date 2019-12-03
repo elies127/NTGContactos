@@ -43,7 +43,7 @@ public class HomeFragment extends Fragment {
             final TextView textView = root.findViewById(R.id.text_home);
             Bundle extras = getActivity().getIntent().getExtras();
             TextView contenido = root.findViewById(R.id.mensaje_correo);
-            contenido.setText(extras.getString("mensaje"));
+
             homeViewModel.getText().observe(this, new Observer<String>() {
                 @Override
                 public void onChanged(@Nullable String s) {

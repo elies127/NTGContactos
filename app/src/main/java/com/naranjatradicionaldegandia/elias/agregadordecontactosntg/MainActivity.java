@@ -15,6 +15,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.OperationApplicationException;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -103,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        FloatingActionButton fab = findViewById(R.id.fab);
+        final FloatingActionButton fab = findViewById(R.id.fab);
 
 
             fab.setOnClickListener(new View.OnClickListener() {
@@ -112,9 +114,12 @@ public class MainActivity extends AppCompatActivity {
                     public void run(){
                         if(ServicioAgregador.estaEncendido){
                             ServicioAgregador.estaEncendido = false;
+
+                            fab.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#17c700")));
                             stopService(new Intent(context, ServicioAgregador.class));
                         } else {
                             ServicioAgregador.estaEncendido = true;
+
 
                             startService(new Intent(context, ServicioAgregador.class));
                         }

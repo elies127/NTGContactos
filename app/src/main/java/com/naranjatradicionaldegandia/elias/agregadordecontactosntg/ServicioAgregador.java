@@ -144,32 +144,7 @@ public class ServicioAgregador extends IntentService {
     public void startForeGround(){
         Log.d("SERVICIO AGREGADOR: ", "---------- INICIALIZANDO SERVICIO --------");
         //-- notis
-        intent = new Intent(context, MainActivity.class);
 
-        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel notificationChannel = new NotificationChannel(
-                    CANAL_ID, "Mis Notificaciones",
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            notificationChannel.setDescription("Descripcion del canal");
-            notificationChannel.enableLights(true);
-            notificationChannel.setLightColor(Color.RED);
-            notificationChannel.setVibrationPattern(new long[]{0, 100, 300, 100});
-            notificationChannel.enableVibration(true);
-            notificationManager.createNotificationChannel(notificationChannel);
-        }
-        final NotificationCompat.Builder notificacion =
-                new NotificationCompat.Builder(ServicioAgregador.this, CANAL_ID)
-                        .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle("NTG Contactos")
-                        .setContentText("Nuevos clientes: " + nPedidosNuevosClientes + " - Pedidos totales: " + nPedidos);
-
-
-        startForeground(NOTIFICACION_ID_SERVICIO, notificacion.build());
-
-        PendingIntent intencionPendiente = PendingIntent.getActivity(
-                this, 0, new Intent(this, MainActivity.class), 0);
-        notificacion.setContentIntent(intencionPendiente);
 
 
     }
@@ -188,7 +163,32 @@ public class ServicioAgregador extends IntentService {
         Log.d("SERVICIO AGREGADOR: ", "---------- COMIENZA EL BUCLE --------");
 
 
+    intent = new Intent(context, MainActivity.class);
 
+    notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        NotificationChannel notificationChannel = new NotificationChannel(
+                CANAL_ID, "Mis Notificaciones",
+                NotificationManager.IMPORTANCE_DEFAULT);
+        notificationChannel.setDescription("Descripcion del canal");
+        notificationChannel.enableLights(true);
+        notificationChannel.setLightColor(Color.RED);
+        notificationChannel.setVibrationPattern(new long[]{0, 100, 300, 100});
+        notificationChannel.enableVibration(true);
+        notificationManager.createNotificationChannel(notificationChannel);
+    }
+    final NotificationCompat.Builder notificacion =
+            new NotificationCompat.Builder(ServicioAgregador.this, CANAL_ID)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle("NTG Contactos")
+                    .setContentText("Nuevos clientes: " + nPedidosNuevosClientes + " - Pedidos totales: " + nPedidos);
+
+
+    startForeground(NOTIFICACION_ID_SERVICIO, notificacion.build());
+
+    PendingIntent intencionPendiente = PendingIntent.getActivity(
+            this, 0, new Intent(this, MainActivity.class), 0);
+    notificacion.setContentIntent(intencionPendiente);
 
                 try {Log.d("SERVICIO AGREGADOR: ", "INTENTANDO OBTENER NUEVO CORREO...");
                     actualizarCorreo();
@@ -294,11 +294,12 @@ public class ServicioAgregador extends IntentService {
 
 
                 } else if(finalString.equals("ERROR DE CONEXION")){
-                    show_Notification("Error de conexión", "Ha habido un error al intentar conectar con el correo", 3);
+
+                    Toast.makeText(context, "Ha habido un error al intentar conectar con el correo", Toast.LENGTH_LONG);
                 }
                 handler.postDelayed(runnable, 250);
 
-        ;
+
 
         handler.postDelayed(runnable, 500);
 
@@ -308,6 +309,7 @@ public class ServicioAgregador extends IntentService {
     public void onDestroy(){
         super.onDestroy();
         if(estaEncendido){
+
             AlarmManager alarm = (AlarmManager)getSystemService(ALARM_SERVICE);
             alarm.set(
                     alarm.RTC_WAKEUP,
@@ -317,34 +319,7 @@ public class ServicioAgregador extends IntentService {
         }
 
     }
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    public void show_Notification(String titulo, String desc, int id){
-        AudioAttributes attributes = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                .build();
-        Uri sound = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.getPackageName() + "/" + R.raw.when);
-        Intent intent=new Intent(getApplicationContext(),MainActivity.class);
-        String CHANNEL_ID="MYCHANNEL";
 
-        PendingIntent pendingIntent=PendingIntent.getActivity(getApplicationContext(),1,intent,0);
-        Notification notification=new Notification.Builder(getApplicationContext(),CHANNEL_ID)
-                .setContentText(titulo)
-                .setContentTitle(desc)
-                .setContentIntent(pendingIntent)
-                .addAction(android.R.drawable.sym_action_chat,"Title",pendingIntent)
-                .setChannelId(CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.sym_action_chat)
-                .build();
-
-        NotificationChannel notificationChannel=new NotificationChannel(CHANNEL_ID,"name",NotificationManager.IMPORTANCE_LOW);
-        notificationChannel.setSound(sound, attributes);
-        notificationChannel.enableVibration(true);
-        NotificationManager notificationManager=(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.createNotificationChannel(notificationChannel);
-        notificationManager.notify(id,notification);
-
-
-    }
 
 
 
