@@ -110,24 +110,26 @@ public class MainActivity extends AppCompatActivity {
 
             fab.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view){  Thread thread = new Thread(){
-                    public void run(){
+            public void onClick(View view){
+
                         if(ServicioAgregador.estaEncendido){
                             ServicioAgregador.estaEncendido = false;
 
                             fab.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#17c700")));
                             stopService(new Intent(context, ServicioAgregador.class));
+                            stopService(new Intent(context, ServicioNotificacion.class));
                         } else {
                             ServicioAgregador.estaEncendido = true;
 
 
                             startService(new Intent(context, ServicioAgregador.class));
+                            startService(new Intent(context, ServicioNotificacion.class));
                         }
 
-                      }
-                };
 
-        thread.start();
+
+
+
         }});
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
